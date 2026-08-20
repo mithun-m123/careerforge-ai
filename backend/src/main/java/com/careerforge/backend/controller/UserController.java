@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.careerforge.backend.entity.User;
+import com.careerforge.backend.dto.UserRequest;
+import com.careerforge.backend.dto.UserResponse;
 import com.careerforge.backend.service.UserService;
 
 import jakarta.validation.Valid;
 
 @RestController
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
@@ -27,19 +30,40 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/api/users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
-}
-    @GetMapping("/api/users")
-    public List<User> getAllUsers() {
+    @PostMapping
+    public ResponseEntity<UserResponse> createUser(
+            @Valid @RequestBody UserRequest request) {
+
+        UserResponse createdUser = userService.createUser(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(createdUser);
+    }
+
+    @GetMapping
+    public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
-   @GetMapping("/api/users/{id}")
-   public ResponseEntity<User> getUserById(@PathVariable Long id) {
 
-    Optional<User> user = userService.getUserById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUserById(
+            @PathVariable Long id) {
+
+        Optional<UserResponse> user = userService.getUserById(id);
+
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/email/{email}")
+public ResponseEntity<UserResponse> getUserByEmail(
+        @PathVariable String email) {
+
+    Optional<UserResponse> user = userService.getUserByEmail(email);
+    System.out.println("EMAIL RECEIVED: " + email);
 
     if (user.isPresent()) {
         return ResponseEntity.ok(user.get());
@@ -47,15 +71,23 @@ public class UserController {
 
     return ResponseEntity.notFound().build();
 }
-    @PutMapping("/api/users/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user) {
-        return userService.updateUser(id, user);
-    }
 
-    @DeleteMapping("/api/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-         userService.deleteUser(id);
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+        @PathVariable Long id,
+        @Valid @RequestBody UserRequest request) {
 
-    return ResponseEntity.noContent().build();
+    UserResponse updatedUser = userService.updateUser(id, request);
+
+    return ResponseEntity.ok(updatedUser);
+}
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long id) {
+
+        userService.deleteUser(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

@@ -20,7 +20,7 @@ public class User {
     @NotBlank
     @Email
     private String email;
-    
+
 //no-argument constructor
     public User() {
     }
@@ -47,4 +47,5 @@ public String getEmail() {
 public void setEmail(String email) {
     this.email = email;
 }
+
 }
