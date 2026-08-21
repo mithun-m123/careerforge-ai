@@ -17,6 +17,8 @@ private User user;
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String resumeSummary;
+
     private String careerGoal;
 
     public StudentProfile() {
@@ -40,6 +42,14 @@ private User user;
 
 public void setUser(User user) {
     this.user = user;
+}
+
+public String getResumeSummary() {
+    return resumeSummary;
+}
+
+public void setResumeSummary(String resumeSummary) {
+    this.resumeSummary = resumeSummary;
 }
 
 }

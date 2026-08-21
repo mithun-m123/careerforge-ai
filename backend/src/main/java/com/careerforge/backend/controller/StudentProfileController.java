@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.careerforge.backend.dto.ResumeSummaryRequest;
 import com.careerforge.backend.dto.StudentProfileRequest;
 import com.careerforge.backend.dto.StudentProfileResponse;
 import com.careerforge.backend.dto.StudentProfileUpdateRequest;
+import com.careerforge.backend.entity.StudentProfile;
 import com.careerforge.backend.service.StudentProfileService;
 
 @RestController
@@ -50,5 +52,18 @@ public ResponseEntity<StudentProfileResponse> updateProfile(
             studentProfileService.updateProfile(userId, request);
 
     return ResponseEntity.ok(profile);
+}
+
+@PutMapping("/{profileId}/resume-summary")
+public ResponseEntity<StudentProfile> updateResumeSummary(
+        @PathVariable Long profileId,
+        @RequestBody ResumeSummaryRequest request) {
+
+    return ResponseEntity.ok(
+            studentProfileService.updateResumeSummary(
+                    profileId,
+                    request.getResumeSummary()
+            )
+    );
 }
 }

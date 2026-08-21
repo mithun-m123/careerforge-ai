@@ -72,4 +72,18 @@ public StudentProfileResponse updateProfile(
             updatedProfile.getCareerGoal()
     );
 }
+
+public StudentProfile updateResumeSummary(
+        Long profileId,
+        String resumeSummary) {
+
+    StudentProfile profile = studentProfileRepository
+            .findById(profileId)
+            .orElseThrow(() ->
+                    new RuntimeException("Student profile not found"));
+
+    profile.setResumeSummary(resumeSummary);
+
+    return studentProfileRepository.save(profile);
+}
 }  
