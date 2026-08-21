@@ -180,33 +180,3 @@ Therefore the correct endpoint is:
 PUT /api/profiles/1/resume-summary
 
 The earlier /api/profile/... gave 404 because the actual mapping is /api/profiles.
-
-Today's Final Architecture
-                    CareerForge
-                         │
-                         ↓
-                  Student Profile
-                         │
-          ┌──────────────┼──────────────┐
-          ↓              ↓              ↓
-      Education       Skills        Projects
-          ↓              ↓              ↓
-      Experience    Certifications
-          │
-          └──────────────┬──────────────┘
-                         ↓
-                    AIService
-                         ↓
-                       Gemini
-                         ↓
-                AI Resume Summary
-                         ↓
-                  Student Reviews
-                         ↓
-                   Accept / Edit
-                         ↓
-             ResumeSummaryRequest
-                         ↓
-              StudentProfileService
-                         ↓
-                       MySQL
