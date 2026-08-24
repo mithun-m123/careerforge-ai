@@ -2,6 +2,7 @@ package com.careerforge.backend.service;
 
 import org.springframework.stereotype.Service;
 
+import com.careerforge.backend.dto.ATSSuggestionRequest;
 import com.careerforge.backend.entity.StudentProfile;
 import com.careerforge.backend.repository.EducationRepository;
 import com.careerforge.backend.repository.ExperienceRepository;
@@ -10,6 +11,7 @@ import com.careerforge.backend.repository.SkillRepository;
 import com.careerforge.backend.repository.StudentProfileRepository;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
+
 
 @Service
 public class AIService {
@@ -87,6 +89,42 @@ public class AIService {
 
         return response.text();
     }
+    public String generateATSSuggestions(ATSSuggestionRequest request) {
+
+    String prompt = """
+            You are CareerForge AI, a professional career assistant.
+
+            Based on the ATS analysis below, provide concise and
+            practical resume improvement suggestions.
+
+            Do not invent skills, experience, projects, or qualifications.
+
+            ATS Score:
+            %s
+
+            Matched Skills:
+            %s
+
+            Missing Skills:
+            %s
+
+            Return only the improvement suggestions.
+            """
+            .formatted(
+                    request.getScore(),
+                    request.getMatchedSkills(),
+                    request.getMissingSkills()
+            );
+
+    GenerateContentResponse response =
+            client.models.generateContent(
+                    "gemini-3.5-flash-lite",
+                    prompt,
+                    null
+            );
+
+    return response.text();
+}
 
     private String getEducation(Long profileId) {
 
