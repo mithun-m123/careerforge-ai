@@ -1,5 +1,7 @@
 package com.careerforge.backend.dto;
 
+import java.util.List;
+
 import com.careerforge.backend.entity.ExperienceType;
 import com.careerforge.backend.entity.SeniorityLevel;
 
@@ -21,6 +23,8 @@ public class JobRequest {
 
     @NotNull
     private SeniorityLevel seniority;
+
+    private List<JobSkillRequest> skills;
 
     public JobRequest() {
     }
@@ -64,4 +68,11 @@ public class JobRequest {
     public void setSeniority(SeniorityLevel seniority) {
         this.seniority = seniority;
     }
+    public List<JobSkillRequest> getSkills() {
+    return skills;
+}
+
+public void setSkills(List<JobSkillRequest> skills) {
+    this.skills = skills;
+}
 }

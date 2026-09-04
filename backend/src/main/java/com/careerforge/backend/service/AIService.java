@@ -99,22 +99,23 @@ public class AIService {
 
             Do not invent skills, experience, projects, or qualifications.
 
-            ATS Score:
-            %s
+            ATS Score: %d
 
-            Matched Skills:
-            %s
+Matched Required Skills: %s
+Missing Required Skills: %s
 
-            Missing Skills:
-            %s
+Matched Preferred Skills: %s
+Missing Preferred Skills: %s
 
-            Return only the improvement suggestions.
-            """
-            .formatted(
-                    request.getScore(),
-                    request.getMatchedSkills(),
-                    request.getMissingSkills()
-            );
+Return only the improvement suggestions.
+"""
+.formatted(
+        request.getScore(),
+        request.getMatchedRequiredSkills(),
+        request.getMissingRequiredSkills(),
+        request.getMatchedPreferredSkills(),
+        request.getMissingPreferredSkills()
+);
 
     GenerateContentResponse response =
             client.models.generateContent(

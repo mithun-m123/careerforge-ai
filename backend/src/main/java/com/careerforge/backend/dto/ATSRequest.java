@@ -3,7 +3,7 @@ package com.careerforge.backend.dto;
 public class ATSRequest {
 
     private Long profileId;
-    private String jobDescription;
+    private Long jobId;
 
     public ATSRequest() {
     }
@@ -16,11 +16,11 @@ public class ATSRequest {
         this.profileId = profileId;
     }
 
-    public String getJobDescription() {
-        return jobDescription;
+    public Long getJobId() {
+        return jobId;
     }
 
-    public void setJobDescription(String jobDescription) {
-        this.jobDescription = jobDescription;
+    public void setJobId(Long jobId) {
+        this.jobId = jobId;
     }
 }

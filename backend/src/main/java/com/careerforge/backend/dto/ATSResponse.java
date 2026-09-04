@@ -5,55 +5,64 @@ import java.util.List;
 public class ATSResponse {
 
     private int score;
-    private List<String> matchedSkills;
-    private List<String> missingSkills;
-    private int totalSkills;
     private String suggestions;
+    private boolean eligible;
+
+    private List<String> matchedRequiredSkills;
+    private List<String> missingRequiredSkills;
+
+    private List<String> matchedPreferredSkills;
+    private List<String> missingPreferredSkills;
 
     public ATSResponse() {
     }
 
-
     public ATSResponse(
-        int score,
-        int totalSkills,
-        List<String> matchedSkills,
-        List<String> missingSkills) {
+            int score,
+            boolean eligible,
+            List<String> matchedRequiredSkills,
+            List<String> missingRequiredSkills,
+            List<String> matchedPreferredSkills,
+            List<String> missingPreferredSkills,
+            String suggestions) {
 
-    this.score = score;
-    this.totalSkills = totalSkills;
-    this.matchedSkills = matchedSkills;
-    this.missingSkills = missingSkills;
-}
-public ATSResponse(
-        int score,
-        int totalSkills,
-        List<String> matchedSkills,
-        List<String> missingSkills,
-        String suggestions) {
+        this.score = score;
+        this.eligible = eligible;
 
-    this.score = score;
-    this.totalSkills = totalSkills;
-    this.matchedSkills = matchedSkills;
-    this.missingSkills = missingSkills;
-    this.suggestions = suggestions;
-}
+        this.matchedRequiredSkills = matchedRequiredSkills;
+        this.missingRequiredSkills = missingRequiredSkills;
+
+        this.matchedPreferredSkills = matchedPreferredSkills;
+        this.missingPreferredSkills = missingPreferredSkills;
+
+        this.suggestions = suggestions;
+    }
 
     public int getScore() {
         return score;
     }
 
-    public List<String> getMatchedSkills() {
-        return matchedSkills;
+    public String getSuggestions() {
+        return suggestions;
     }
 
-    public List<String> getMissingSkills() {
-        return missingSkills;
+    public boolean isEligible() {
+        return eligible;
     }
-    public int getTotalSkills() {
-    return totalSkills;
-}
-public String getSuggestions() {
-    return suggestions;
-}
+
+    public List<String> getMatchedRequiredSkills() {
+        return matchedRequiredSkills;
+    }
+
+    public List<String> getMissingRequiredSkills() {
+        return missingRequiredSkills;
+    }
+
+    public List<String> getMatchedPreferredSkills() {
+        return matchedPreferredSkills;
+    }
+
+    public List<String> getMissingPreferredSkills() {
+        return missingPreferredSkills;
+    }
 }
