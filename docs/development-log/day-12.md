@@ -1,41 +1,90 @@
 # Day 12 — CareerForge Log
+
 ## Date
-
 04 September 2026
-
 ## Concepts Learned
 
-### 1. Semantic Matching
-- Understood the difference between exact matching, skill normalization, and semantic matching.
-- Semantic matching compares the meaning of job and resume text rather than only matching exact words.
-- Embeddings convert text into numerical vectors.
-- Cosine similarity can measure how semantically similar two vectors are.
-- Semantic matching should act as a supporting ATS signal and should not override hard requirements.
+### 1. Testing the Job API
+- Understood why an API should be tested before building further features.
+- Learned to verify the complete request → controller → service → repository → database flow.
+- Used Postman to test the Job creation API.
 
-### 2. Hybrid ATS Matching
-- CareerForge uses multiple matching layers:
-  - Exact skill matching
-  - Skill normalization
-  - Semantic matching
-- Hard requirements remain deterministic for eligibility.
-- AI/semantic signals should not independently decide candidate eligibility.
+### 2. API Validation & Error Handling
+- Tested valid and invalid Job requests.
+- Verified validation and business-rule errors.
+- Confirmed that errors are handled through the global exception handler.
+
+### 3. Recruiter Job & Skill Requirements
+- Tested structured recruiter job creation.
+- Verified required and preferred skills.
+- Verified that JobSkill connects a Job with a Skill and stores the requirement type.
+
+### 4. ATS Testing
+- Tested ATS analysis using a stored Job instead of passing a raw job description.
+- Verified:
+  - ATS score
+  - eligibility
+  - matched required skills
+  - missing required skills
+  - matched preferred skills
+  - missing preferred skills
+  - AI suggestions
+
+### 5. Experience-Based Eligibility
+- Integrated candidate experience into ATS eligibility.
+- Experience is calculated from the candidate's stored Experience records.
+- Required experience can make a candidate ineligible.
+
+### 6. Skill Normalization
+- Added skill normalization to handle common variations such as:
+  - `js` → `javascript`
+  - `springboot` → `spring boot`
+  - `reactjs` → `react`
+  - `nodejs` → `node.js`
+  - `ts` → `typescript`
+
+### 7. Conditional AI Suggestions
+- Gemini is called only when there are missing required or preferred skills.
+- ATS facts and score remain controlled by the backend.
+- Gemini provides improvement suggestions rather than deciding the ATS result.
 
 ## Implementation
 
-### ATS Architecture Review
-- Reviewed where semantic matching fits into the CareerForge ATS pipeline.
-- Confirmed that Gemini generation and skill normalization alone do not constitute semantic matching.
-- Identified embeddings + similarity calculation as the key evidence of semantic matching.
+### Job API Testing
+- Created and tested structured recruiter Jobs through `POST /api/jobs`.
+- Verified Job, Skill, and JobSkill data in MySQL.
+
+### ATS Improvements
+- Changed ATS input from a raw job description to a `jobId`.
+- ATS now retrieves the structured Job and its requirements from the database.
+- Added required/preferred skill separation.
+- Added experience eligibility.
+- Added skill normalization.
+- Updated ATS response and Gemini suggestion DTOs.
+
+### Testing
+- Tested the ATS endpoint using Postman.
+- Verified an example result with:
+  - matched required skill: Java
+  - missing required skill: MySQL
+  - missing preferred skill: Git
+  - score: 35
+  - eligible: false
+- Ran Maven tests successfully.
 
 ## Today's Progress
 
-- Completed understanding of semantic matching.
-- Reviewed the current ATS architecture and its matching layers.
-- Prepared the project to move forward to the Job Application and Candidate Ranking module.
+- Job posting API was verified.
+- Structured Job → Skill relationships were tested.
+- ATS was connected to structured recruiter Jobs.
+- Experience-based eligibility was added.
+- Skill normalization was added.
+- ATS scoring and AI suggestion flow were verified.
+- `mvn test` completed successfully.
 
 ## Next
 
-- Implement Job Application module.
-- Connect applications with StudentProfile and Job.
-- Store ATS score and eligibility for candidate ranking.
-- Build recruiter-side candidate ranking flow.
+- Continue with the Job Application module.
+- Connect students with Jobs through Applications.
+- Store application status and ATS results.
+- Build the recruiter candidate-review/ranking flow.
