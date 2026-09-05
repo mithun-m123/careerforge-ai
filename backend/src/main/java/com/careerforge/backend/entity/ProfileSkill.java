@@ -1,45 +1,44 @@
 package com.careerforge.backend.entity;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 @Entity
-public class JobSkill {
+public class ProfileSkill {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    private Job job;
+    @JoinColumn(name = "profile_id", nullable = false)
+    private StudentProfile profile;
 
     @ManyToOne
+    @JoinColumn(name = "skill_id", nullable = false)
     private Skill skill;
 
-    @Enumerated(EnumType.STRING)
-    private SkillRequirementType type;
+    @Column(nullable = false)
+    private String level;
 
-    public JobSkill() {
+    public ProfileSkill() {
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public StudentProfile getProfile() {
+        return profile;
     }
 
-    public Job getJob() {
-        return job;
-    }
-
-    public void setJob(Job job) {
-        this.job = job;
+    public void setProfile(StudentProfile profile) {
+        this.profile = profile;
     }
 
     public Skill getSkill() {
@@ -50,11 +49,11 @@ public class JobSkill {
         this.skill = skill;
     }
 
-    public SkillRequirementType getType() {
-        return type;
+    public String getLevel() {
+        return level;
     }
 
-    public void setType(SkillRequirementType type) {
-        this.type = type;
+    public void setLevel(String level) {
+        this.level = level;
     }
 }

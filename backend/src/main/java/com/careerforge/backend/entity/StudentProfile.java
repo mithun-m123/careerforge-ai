@@ -1,4 +1,5 @@
 package com.careerforge.backend.entity;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,9 +10,9 @@ import jakarta.persistence.OneToOne;
 @Entity
 public class StudentProfile {
 
-@OneToOne
-@JoinColumn(name = "user_id")
-private User user;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,19 +38,18 @@ private User user;
     }
 
     public User getUser() {
-    return user;
-}
+        return user;
+    }
 
-public void setUser(User user) {
-    this.user = user;
-}
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-public String getResumeSummary() {
-    return resumeSummary;
-}
+    public String getResumeSummary() {
+        return resumeSummary;
+    }
 
-public void setResumeSummary(String resumeSummary) {
-    this.resumeSummary = resumeSummary;
-}
-
+    public void setResumeSummary(String resumeSummary) {
+        this.resumeSummary = resumeSummary;
+    }
 }

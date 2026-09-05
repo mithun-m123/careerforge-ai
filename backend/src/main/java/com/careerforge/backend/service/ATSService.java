@@ -1,6 +1,7 @@
 package com.careerforge.backend.service;
 
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,99 +43,118 @@ public class ATSService {
 
     public ATSResponse analyze(ATSRequest request) {
 
-        // 1. Get the job
         Job job = jobRepository.findById(request.getJobId())
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Job not found: " + request.getJobId()
                         ));
 
-        // 2. Get candidate skills
-        List<Skill> resumeSkills =
+        List<Skill> candidateSkills =
                 skillRepository.findByProfileId(request.getProfileId());
-
-        // 3. Get job skills
-        List<JobSkill> jobSkills = job.getJobSkills();
 
         List<JobSkill> requiredSkills = new ArrayList<>();
         List<JobSkill> preferredSkills = new ArrayList<>();
 
         List<String> matchedRequiredSkills = new ArrayList<>();
         List<String> missingRequiredSkills = new ArrayList<>();
-
         List<String> matchedPreferredSkills = new ArrayList<>();
         List<String> missingPreferredSkills = new ArrayList<>();
 
-        // 4. Separate required and preferred skills
-        for (JobSkill jobSkill : jobSkills) {
+        /*
+         * Separate required and preferred job skills.
+         */
+        for (JobSkill jobSkill : job.getJobSkills()) {
 
             if (jobSkill.getType() == SkillRequirementType.REQUIRED) {
-
                 requiredSkills.add(jobSkill);
+            }
 
-            } else if (jobSkill.getType() == SkillRequirementType.PREFERRED) {
-
+            if (jobSkill.getType() == SkillRequirementType.PREFERRED) {
                 preferredSkills.add(jobSkill);
             }
         }
 
-        // 5. Match required skills
+        /*
+         * Match required skills.
+         */
         for (JobSkill jobSkill : requiredSkills) {
 
-          String requiredSkill =
-        jobSkill.getSkill().getName();
+            String requiredSkillName =
+                    jobSkill.getSkill().getName();
 
-String normalizedRequiredSkill =
-        SkillNormalizer.normalize(requiredSkill);
+            String normalizedRequiredSkill =
+                    SkillNormalizer.normalize(requiredSkillName);
 
-boolean presentInResume =
-        resumeSkills.stream()
-                .anyMatch(resumeSkill ->
-                        SkillNormalizer.normalize(
-                                resumeSkill.getName()
-                        ).equals(normalizedRequiredSkill));
+            boolean matched = false;
 
-            if (presentInResume) {
+            for (Skill candidateSkill : candidateSkills) {
 
-                matchedRequiredSkills.add(requiredSkill);
+                String candidateSkillName =
+                        candidateSkill.getName();
 
+                String normalizedCandidateSkill =
+                        SkillNormalizer.normalize(candidateSkillName);
+
+                if (normalizedCandidateSkill.equals(
+                        normalizedRequiredSkill)) {
+
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (matched) {
+                matchedRequiredSkills.add(requiredSkillName);
             } else {
-
-                missingRequiredSkills.add(requiredSkill);
+                missingRequiredSkills.add(requiredSkillName);
             }
         }
 
-        // 6. Match preferred skills
+        /*
+         * Match preferred skills.
+         */
         for (JobSkill jobSkill : preferredSkills) {
 
-            String preferredSkill =
-        jobSkill.getSkill().getName();
+            String preferredSkillName =
+                    jobSkill.getSkill().getName();
 
-String normalizedPreferredSkill =
-        SkillNormalizer.normalize(preferredSkill);
+            String normalizedPreferredSkill =
+                    SkillNormalizer.normalize(preferredSkillName);
 
-boolean presentInResume =
-        resumeSkills.stream()
-                .anyMatch(resumeSkill ->
-                        SkillNormalizer.normalize(
-                                resumeSkill.getName()
-                        ).equals(normalizedPreferredSkill));
+            boolean matched = false;
 
-            if (presentInResume) {
+            for (Skill candidateSkill : candidateSkills) {
 
-                matchedPreferredSkills.add(preferredSkill);
+                String candidateSkillName =
+                        candidateSkill.getName();
 
+                String normalizedCandidateSkill =
+                        SkillNormalizer.normalize(candidateSkillName);
+
+                if (normalizedCandidateSkill.equals(
+                        normalizedPreferredSkill)) {
+
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (matched) {
+                matchedPreferredSkills.add(preferredSkillName);
             } else {
-
-                missingPreferredSkills.add(preferredSkill);
+                missingPreferredSkills.add(preferredSkillName);
             }
         }
 
-        // 7. Calculate candidate experience
+        /*
+         * Calculate candidate experience.
+         */
         double candidateExperience =
                 calculateTotalExperience(request.getProfileId());
 
-        // 8. Check experience eligibility
+        /*
+         * Experience eligibility.
+         */
         boolean experienceEligible = true;
 
         if (job.getExperienceType() == ExperienceType.REQUIRED) {
@@ -143,12 +163,19 @@ boolean presentInResume =
                     candidateExperience >= job.getMinimumExperience();
         }
 
-        // 9. Final eligibility
+        /*
+         * Final eligibility.
+         */
         boolean eligible =
                 missingRequiredSkills.isEmpty()
                 && experienceEligible;
 
-        // 10. Calculate ATS score
+        /*
+         * ATS score.
+         *
+         * Required skills = 70%
+         * Preferred skills = 30%
+         */
         int score;
 
         if (requiredSkills.isEmpty()
@@ -181,7 +208,9 @@ boolean presentInResume =
             score = requiredScore + preferredScore;
         }
 
-        // 11. Prepare Gemini request
+        /*
+         * Prepare Gemini suggestions.
+         */
         ATSSuggestionRequest suggestionRequest =
                 new ATSSuggestionRequest();
 
@@ -199,9 +228,12 @@ boolean presentInResume =
         suggestionRequest.setMissingPreferredSkills(
                 missingPreferredSkills);
 
-        // 12. Call Gemini only when there are missing skills
         String suggestions = "";
 
+        /*
+         * Gemini is only called when improvement suggestions
+         * are actually required.
+         */
         if (!missingRequiredSkills.isEmpty()
                 || !missingPreferredSkills.isEmpty()) {
 
@@ -210,7 +242,6 @@ boolean presentInResume =
                             suggestionRequest);
         }
 
-        // 13. Return ATS response
         return new ATSResponse(
                 score,
                 eligible,
@@ -222,7 +253,6 @@ boolean presentInResume =
         );
     }
 
-    // Calculate total candidate experience in years
     private double calculateTotalExperience(Long profileId) {
 
         List<Experience> experiences =
@@ -249,7 +279,7 @@ boolean presentInResume =
             long months =
                     startMonth.until(
                             endMonth,
-                            java.time.temporal.ChronoUnit.MONTHS);
+                            ChronoUnit.MONTHS);
 
             totalMonths += Math.max(months, 0);
         }

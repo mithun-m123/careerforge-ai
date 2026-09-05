@@ -1,178 +1,122 @@
 package com.careerforge.backend.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.careerforge.backend.dto.ATSSuggestionRequest;
-import com.careerforge.backend.entity.StudentProfile;
-import com.careerforge.backend.repository.EducationRepository;
-import com.careerforge.backend.repository.ExperienceRepository;
-import com.careerforge.backend.repository.ProjectRepository;
-import com.careerforge.backend.repository.SkillRepository;
-import com.careerforge.backend.repository.StudentProfileRepository;
+import com.careerforge.backend.entity.ProfileSkill;
+import com.careerforge.backend.repository.ProfileSkillRepository;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
-
 
 @Service
 public class AIService {
 
+    private final ProfileSkillRepository profileSkillRepository;
+
     private final Client client;
-    private final StudentProfileRepository studentProfileRepository;
-    private final EducationRepository educationRepository;
-    private final SkillRepository skillRepository;
-    private final ProjectRepository projectRepository;
-    private final ExperienceRepository experienceRepository;
+
+    @Value("${google.genai.model:gemini-2.5-flash}")
+    private String model;
 
     public AIService(
-            StudentProfileRepository studentProfileRepository,
-            EducationRepository educationRepository,
-            SkillRepository skillRepository,
-            ProjectRepository projectRepository,
-            ExperienceRepository experienceRepository) {
+            ProfileSkillRepository profileSkillRepository) {
 
-        this.studentProfileRepository = studentProfileRepository;
-        this.educationRepository = educationRepository;
-        this.skillRepository = skillRepository;
-        this.projectRepository = projectRepository;
-        this.experienceRepository = experienceRepository;
+        this.profileSkillRepository = profileSkillRepository;
 
-        this.client = new Client();
+        this.client = Client.builder()
+                .build();
     }
 
     public String generateResumeSummary(Long profileId) {
 
-        StudentProfile profile = studentProfileRepository
-                .findById(profileId)
-                .orElseThrow(() ->
-                        new RuntimeException("Student profile not found"));
+        String skills = getSkills(profileId);
 
         String prompt = """
-                You are CareerForge AI, a professional career assistant.
+                Generate a professional resume summary for a student.
 
-                Generate a concise and professional resume summary
-                for the student based ONLY on the information provided.
-
-                Do not invent skills, experience, projects,
-                certifications, achievements, or qualifications.
-
-                Career Goal:
-                %s
-
-                Education:
-                %s
+                Student Profile ID: %d
 
                 Skills:
                 %s
 
-                Projects:
-                %s
+                Keep the summary concise, professional, and suitable
+                for a software engineering resume.
 
-                Experience:
-                %s
-
-                Return only the final resume summary.
-                """
-                .formatted(
-                        profile.getCareerGoal(),
-                        getEducation(profileId),
-                        getSkills(profileId),
-                        getProjects(profileId),
-                        getExperience(profileId)
-                );
+                Do not invent qualifications, experience, projects,
+                certifications, or achievements that were not provided.
+                """.formatted(profileId, skills);
 
         GenerateContentResponse response =
                 client.models.generateContent(
-                        "gemini-3.5-flash-lite",
+                        model,
                         prompt,
                         null
                 );
 
         return response.text();
     }
-    public String generateATSSuggestions(ATSSuggestionRequest request) {
 
-    String prompt = """
-            You are CareerForge AI, a professional career assistant.
+    public String generateATSSuggestions(
+            ATSSuggestionRequest request) {
 
-            Based on the ATS analysis below, provide concise and
-            practical resume improvement suggestions.
+        String prompt = """
+                You are an ATS career assistant for CareerForge.
 
-            Do not invent skills, experience, projects, or qualifications.
+                ATS Score: %d
 
-            ATS Score: %d
+                Matched Required Skills:
+                %s
 
-Matched Required Skills: %s
-Missing Required Skills: %s
+                Missing Required Skills:
+                %s
 
-Matched Preferred Skills: %s
-Missing Preferred Skills: %s
+                Matched Preferred Skills:
+                %s
 
-Return only the improvement suggestions.
-"""
-.formatted(
-        request.getScore(),
-        request.getMatchedRequiredSkills(),
-        request.getMissingRequiredSkills(),
-        request.getMatchedPreferredSkills(),
-        request.getMissingPreferredSkills()
-);
+                Missing Preferred Skills:
+                %s
 
-    GenerateContentResponse response =
-            client.models.generateContent(
-                    "gemini-3.5-flash-lite",
-                    prompt,
-                    null
-            );
+                Provide concise, actionable suggestions to improve
+                the candidate's match for this job.
 
-    return response.text();
-}
+                Rules:
+                - Do not invent qualifications.
+                - Do not change the ATS score.
+                - Do not claim that a missing skill is present.
+                - Clearly distinguish required skills from preferred skills.
+                - Focus on realistic improvement suggestions.
+                """.formatted(
+                request.getScore(),
+                request.getMatchedRequiredSkills(),
+                request.getMissingRequiredSkills(),
+                request.getMatchedPreferredSkills(),
+                request.getMissingPreferredSkills()
+        );
 
-    private String getEducation(Long profileId) {
+        GenerateContentResponse response =
+                client.models.generateContent(
+                        model,
+                        prompt,
+                        null
+                );
 
-        return educationRepository.findByProfileId(profileId)
-                .stream()
-                .map(education ->
-                        education.getDegree() + " - " +
-                        education.getCollege() + " - " +
-                        education.getBranch() +
-                        " - CGPA: " +
-                        education.getCgpa())
-                .toList()
-                .toString();
+        return response.text();
     }
 
     private String getSkills(Long profileId) {
 
-        return skillRepository.findByProfileId(profileId)
-                .stream()
-                .map(skill ->
-                        skill.getName() + " (" +
-                        skill.getLevel() + ")")
-                .toList()
-                .toString();
-    }
+        List<ProfileSkill> profileSkills =
+                profileSkillRepository.findByProfileId(profileId);
 
-    private String getProjects(Long profileId) {
-
-        return projectRepository.findByProfileId(profileId)
-                .stream()
-                .map(project ->
-                        project.getTitle() + ": " +
-                        project.getDescription() +
-                        " | Technologies: " +
-                        project.getTechnologies())
-                .toList()
-                .toString();
-    }
-
-    private String getExperience(Long profileId) {
-
-        return experienceRepository.findByProfileId(profileId)
-                .stream()
-                .map(experience ->
-                        experience.getRole() + " at " +
-                        experience.getCompany() + ": " +
-                        experience.getDescription())
+        return profileSkills.stream()
+                .map(profileSkill ->
+                        profileSkill.getSkill().getName()
+                                + " ("
+                                + profileSkill.getLevel()
+                                + ")")
                 .toList()
                 .toString();
     }
