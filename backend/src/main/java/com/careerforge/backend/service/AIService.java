@@ -106,6 +106,55 @@ public class AIService {
         return response.text();
     }
 
+    public String generateRecruiterExplanation(
+        ATSSuggestionRequest request) {
+
+    String prompt = """
+            You are an ATS screening assistant for recruiters at CareerForge.
+
+            ATS Score: %d
+
+            Matched Required Skills:
+            %s
+
+            Missing Required Skills:
+            %s
+
+            Matched Preferred Skills:
+            %s
+
+            Missing Preferred Skills:
+            %s
+
+            Provide a concise recruiter-focused explanation of this candidate's
+            ATS result.
+
+            Explain:
+            - Why the candidate received this match result.
+            - Important missing required skills.
+            - Missing preferred skills when relevant.
+            - Do not tell the candidate to modify or improve their resume.
+            - Do not invent qualifications, skills, or experience.
+            - Do not change or reinterpret the ATS score.
+            - Focus only on the information provided.
+            """.formatted(
+            request.getScore(),
+            request.getMatchedRequiredSkills(),
+            request.getMissingRequiredSkills(),
+            request.getMatchedPreferredSkills(),
+            request.getMissingPreferredSkills()
+    );
+
+    GenerateContentResponse response =
+            client.models.generateContent(
+                    model,
+                    prompt,
+                    null
+            );
+
+    return response.text();
+}
+
     private String getSkills(Long profileId) {
 
         List<ProfileSkill> profileSkills =

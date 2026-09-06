@@ -4,11 +4,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.careerforge.backend.dto.ATSRequest;
 import com.careerforge.backend.dto.ATSResponse;
 import com.careerforge.backend.dto.ApplicationRequest;
-import com.careerforge.backend.dto.ApplicationResponse;
+import com.careerforge.backend.dto.RecruiterApplicationResponse;
+import com.careerforge.backend.dto.StudentApplicationResponse;
 import com.careerforge.backend.entity.ATSResult;
 import com.careerforge.backend.entity.Application;
 import com.careerforge.backend.entity.ApplicationStatus;
@@ -26,17 +28,6 @@ public class ApplicationService {
     private final JobRepository jobRepository;
     private final ATSService atsService;
 
-    public List<ApplicationResponse> getRankedApplications(Long jobId) {
-
-    List<Application> applications =
-            applicationRepository
-                    .findByJobIdOrderByAtsResultScoreDesc(jobId);
-
-    return applications.stream()
-            .map(this::toResponse)
-            .toList();
-}
-
     public ApplicationService(
             ApplicationRepository applicationRepository,
             StudentProfileRepository profileRepository,
@@ -49,7 +40,27 @@ public class ApplicationService {
         this.atsService = atsService;
     }
 
-    public ApplicationResponse apply(ApplicationRequest request) {
+    /*
+     * Recruiter:
+     * Returns all candidates for a job ordered by ATS score.
+     */
+    public List<RecruiterApplicationResponse> getRankedApplications(Long jobId) {
+
+        List<Application> applications =
+                applicationRepository
+                        .findByJobIdOrderByAtsResultScoreDesc(jobId);
+
+        return applications.stream()
+                .map(this::toRecruiterResponse)
+                .toList();
+    }
+
+    /*
+     * Student:
+     * Apply for a job and receive only student-facing information.
+     */
+    @Transactional
+    public StudentApplicationResponse apply(ApplicationRequest request) {
 
         StudentProfile profile =
                 profileRepository.findById(request.getProfileId())
@@ -67,6 +78,7 @@ public class ApplicationService {
                                                 + request.getJobId()
                                 ));
 
+        // Prevent duplicate applications
         if (applicationRepository
                 .findByProfileIdAndJobId(
                         request.getProfileId(),
@@ -78,14 +90,17 @@ public class ApplicationService {
             );
         }
 
+        // Prepare ATS request
         ATSRequest atsRequest = new ATSRequest();
 
         atsRequest.setProfileId(request.getProfileId());
         atsRequest.setJobId(request.getJobId());
 
+        // Run ATS analysis
         ATSResponse atsResponse =
                 atsService.analyze(atsRequest);
 
+        // Create application
         Application application = new Application();
 
         application.setProfile(profile);
@@ -93,11 +108,16 @@ public class ApplicationService {
         application.setStatus(ApplicationStatus.APPLIED);
         application.setAppliedAt(LocalDateTime.now());
 
+        // Create ATS result
         ATSResult atsResult = new ATSResult();
 
         atsResult.setApplication(application);
-        atsResult.setScore(atsResponse.getScore());
-        atsResult.setEligible(atsResponse.isEligible());
+
+        atsResult.setScore(
+                atsResponse.getScore());
+
+        atsResult.setEligible(
+                atsResponse.isEligible());
 
         atsResult.setMatchedRequiredSkills(
                 atsResponse.getMatchedRequiredSkills());
@@ -111,22 +131,55 @@ public class ApplicationService {
         atsResult.setMissingPreferredSkills(
                 atsResponse.getMissingPreferredSkills());
 
-        atsResult.setSuggestions(
-                atsResponse.getSuggestions());
+        // Store both internally.
+        // Student API exposes only studentSuggestions.
+        // Recruiter API exposes only recruiterExplanation.
+        atsResult.setStudentSuggestions(
+                atsResponse.getStudentSuggestions());
+
+        atsResult.setRecruiterExplanation(
+                atsResponse.getRecruiterExplanation());
 
         application.setAtsResult(atsResult);
 
+        // Save complete application + ATS result
         Application savedApplication =
                 applicationRepository.save(application);
 
-        return toResponse(savedApplication);
+        // Student receives student-facing response only
+        return toStudentResponse(savedApplication);
     }
 
-    private ApplicationResponse toResponse(
+    /*
+     * Student:
+     * View their application details.
+     */
+    public StudentApplicationResponse getApplication(Long id) {
+
+        Application application =
+                applicationRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Application not found: " + id
+                                ));
+
+        return toStudentResponse(application);
+    }
+
+    /*
+     * Converts Application entity into student-facing DTO.
+     *
+     * IMPORTANT:
+     * recruiterExplanation is intentionally NOT included.
+     */
+    private StudentApplicationResponse toStudentResponse(
             Application application) {
 
-        ApplicationResponse response =
-                new ApplicationResponse();
+        ATSResult atsResult =
+                application.getAtsResult();
+
+        StudentApplicationResponse response =
+                new StudentApplicationResponse();
 
         response.setId(application.getId());
 
@@ -137,37 +190,84 @@ public class ApplicationService {
                 application.getJob().getId());
 
         response.setStatus(
-                application.getStatus());
+                application.getStatus().name());
 
         response.setAppliedAt(
                 application.getAppliedAt());
 
+        response.setAtsScore(
+                atsResult.getScore());
+
+        response.setEligible(
+                atsResult.getEligible());
+
+        response.setMatchedRequiredSkills(
+                atsResult.getMatchedRequiredSkills());
+
+        response.setMissingRequiredSkills(
+                atsResult.getMissingRequiredSkills());
+
+        response.setMatchedPreferredSkills(
+                atsResult.getMatchedPreferredSkills());
+
+        response.setMissingPreferredSkills(
+                atsResult.getMissingPreferredSkills());
+
+        response.setStudentSuggestions(
+                atsResult.getStudentSuggestions());
+
+        return response;
+    }
+
+    /*
+     * Converts Application entity into recruiter-facing DTO.
+     *
+     * IMPORTANT:
+     * studentSuggestions is intentionally NOT included.
+     */
+    private RecruiterApplicationResponse toRecruiterResponse(
+            Application application) {
+
         ATSResult atsResult =
                 application.getAtsResult();
 
-        if (atsResult != null) {
+        RecruiterApplicationResponse response =
+                new RecruiterApplicationResponse();
 
-            response.setAtsScore(
-                    atsResult.getScore());
+        response.setId(application.getId());
 
-            response.setEligible(
-                    atsResult.getEligible());
+        response.setProfileId(
+                application.getProfile().getId());
 
-            response.setMatchedRequiredSkills(
-                    atsResult.getMatchedRequiredSkills());
+        response.setJobId(
+                application.getJob().getId());
 
-            response.setMissingRequiredSkills(
-                    atsResult.getMissingRequiredSkills());
+        response.setStatus(
+                application.getStatus().name());
 
-            response.setMatchedPreferredSkills(
-                    atsResult.getMatchedPreferredSkills());
+        response.setAppliedAt(
+                application.getAppliedAt());
 
-            response.setMissingPreferredSkills(
-                    atsResult.getMissingPreferredSkills());
+        response.setAtsScore(
+                atsResult.getScore());
 
-            response.setSuggestions(
-                    atsResult.getSuggestions());
-        }
+        response.setEligible(
+                atsResult.getEligible());
+
+        response.setMatchedRequiredSkills(
+                atsResult.getMatchedRequiredSkills());
+
+        response.setMissingRequiredSkills(
+                atsResult.getMissingRequiredSkills());
+
+        response.setMatchedPreferredSkills(
+                atsResult.getMatchedPreferredSkills());
+
+        response.setMissingPreferredSkills(
+                atsResult.getMissingPreferredSkills());
+
+        response.setRecruiterExplanation(
+                atsResult.getRecruiterExplanation());
 
         return response;
     }

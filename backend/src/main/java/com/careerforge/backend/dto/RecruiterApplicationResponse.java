@@ -3,35 +3,26 @@ package com.careerforge.backend.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.careerforge.backend.entity.ApplicationStatus;
-
-public class ApplicationResponse {
+public class RecruiterApplicationResponse {
 
     private Long id;
-
     private Long profileId;
-
     private Long jobId;
-
-    private ApplicationStatus status;
-
+    private String status;
     private LocalDateTime appliedAt;
 
-    private Integer atsScore;
-
-    private Boolean eligible;
+    private int atsScore;
+    private boolean eligible;
 
     private List<String> matchedRequiredSkills;
-
     private List<String> missingRequiredSkills;
-
     private List<String> matchedPreferredSkills;
-
     private List<String> missingPreferredSkills;
 
+    private String recruiterExplanation;
 
-    public ApplicationResponse() {
-    }
+
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -57,11 +48,11 @@ public class ApplicationResponse {
         this.jobId = jobId;
     }
 
-    public ApplicationStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(ApplicationStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
@@ -73,19 +64,19 @@ public class ApplicationResponse {
         this.appliedAt = appliedAt;
     }
 
-    public Integer getAtsScore() {
+    public int getAtsScore() {
         return atsScore;
     }
 
-    public void setAtsScore(Integer atsScore) {
+    public void setAtsScore(int atsScore) {
         this.atsScore = atsScore;
     }
 
-    public Boolean getEligible() {
+    public boolean isEligible() {
         return eligible;
     }
 
-    public void setEligible(Boolean eligible) {
+    public void setEligible(boolean eligible) {
         this.eligible = eligible;
     }
 
@@ -93,8 +84,7 @@ public class ApplicationResponse {
         return matchedRequiredSkills;
     }
 
-    public void setMatchedRequiredSkills(
-            List<String> matchedRequiredSkills) {
+    public void setMatchedRequiredSkills(List<String> matchedRequiredSkills) {
         this.matchedRequiredSkills = matchedRequiredSkills;
     }
 
@@ -102,8 +92,7 @@ public class ApplicationResponse {
         return missingRequiredSkills;
     }
 
-    public void setMissingRequiredSkills(
-            List<String> missingRequiredSkills) {
+    public void setMissingRequiredSkills(List<String> missingRequiredSkills) {
         this.missingRequiredSkills = missingRequiredSkills;
     }
 
@@ -111,8 +100,7 @@ public class ApplicationResponse {
         return matchedPreferredSkills;
     }
 
-    public void setMatchedPreferredSkills(
-            List<String> matchedPreferredSkills) {
+    public void setMatchedPreferredSkills(List<String> matchedPreferredSkills) {
         this.matchedPreferredSkills = matchedPreferredSkills;
     }
 
@@ -120,9 +108,15 @@ public class ApplicationResponse {
         return missingPreferredSkills;
     }
 
-    public void setMissingPreferredSkills(
-            List<String> missingPreferredSkills) {
+    public void setMissingPreferredSkills(List<String> missingPreferredSkills) {
         this.missingPreferredSkills = missingPreferredSkills;
     }
 
+    public String getRecruiterExplanation() {
+        return recruiterExplanation;
+    }
+
+    public void setRecruiterExplanation(String recruiterExplanation) {
+        this.recruiterExplanation = recruiterExplanation;
+    }
 }

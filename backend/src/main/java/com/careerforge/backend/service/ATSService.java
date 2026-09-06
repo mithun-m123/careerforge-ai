@@ -209,7 +209,7 @@ public class ATSService {
         }
 
         /*
-         * Prepare Gemini suggestions.
+         * Prepare AI suggestions and recruiter explanation.
          */
         ATSSuggestionRequest suggestionRequest =
                 new ATSSuggestionRequest();
@@ -228,17 +228,27 @@ public class ATSService {
         suggestionRequest.setMissingPreferredSkills(
                 missingPreferredSkills);
 
-        String suggestions = "";
+        String studentSuggestions = "";
+        String recruiterExplanation = "";
 
         /*
-         * Gemini is only called when improvement suggestions
-         * are actually required.
+         * Gemini is called only when there are missing skills.
          */
         if (!missingRequiredSkills.isEmpty()
                 || !missingPreferredSkills.isEmpty()) {
 
-            suggestions =
+            /*
+             * Student-focused AI output.
+             */
+            studentSuggestions =
                     aiService.generateATSSuggestions(
+                            suggestionRequest);
+
+            /*
+             * Recruiter-focused AI output.
+             */
+            recruiterExplanation =
+                    aiService.generateRecruiterExplanation(
                             suggestionRequest);
         }
 
@@ -249,7 +259,8 @@ public class ATSService {
                 missingRequiredSkills,
                 matchedPreferredSkills,
                 missingPreferredSkills,
-                suggestions
+                studentSuggestions,
+                recruiterExplanation
         );
     }
 

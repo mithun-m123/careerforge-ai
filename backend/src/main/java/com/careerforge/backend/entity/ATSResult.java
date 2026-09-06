@@ -56,8 +56,11 @@ public class ATSResult {
     )
     private List<String> missingPreferredSkills = new ArrayList<>();
 
-@Column(columnDefinition = "TEXT")
-private String suggestions;
+    @Column(columnDefinition = "TEXT")
+    private String studentSuggestions;
+
+    private String recruiterExplanation;
+
     public ATSResult() {
     }
 
@@ -125,11 +128,19 @@ private String suggestions;
         this.missingPreferredSkills = missingPreferredSkills;
     }
 
-    public String getSuggestions() {
-        return suggestions;
+    public String getStudentSuggestions() {
+        return studentSuggestions;
     }
 
-    public void setSuggestions(String suggestions) {
-        this.suggestions = suggestions;
+    public void setStudentSuggestions(String studentSuggestions) {
+        this.studentSuggestions = studentSuggestions;
+    }
+
+    public String getRecruiterExplanation() {
+        return recruiterExplanation;
+    }
+
+    public void setRecruiterExplanation(String recruiterExplanation) {
+        this.recruiterExplanation = recruiterExplanation;
     }
 }

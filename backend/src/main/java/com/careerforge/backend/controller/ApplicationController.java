@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.careerforge.backend.dto.ApplicationRequest;
-import com.careerforge.backend.dto.ApplicationResponse;
+import com.careerforge.backend.dto.StudentApplicationResponse;
+import com.careerforge.backend.dto.RecruiterApplicationResponse;
 import com.careerforge.backend.service.ApplicationService;
 
 @RestController
@@ -27,10 +28,10 @@ public class ApplicationController {
     }
 
     @PostMapping
-    public ResponseEntity<ApplicationResponse> apply(
+    public ResponseEntity<StudentApplicationResponse> apply(
             @RequestBody ApplicationRequest request) {
 
-        ApplicationResponse response =
+        StudentApplicationResponse response =
                 applicationService.apply(request);
 
         return ResponseEntity
@@ -39,11 +40,18 @@ public class ApplicationController {
     }
 
     @GetMapping("/job/{jobId}/ranked")
-public ResponseEntity<List<ApplicationResponse>> getRankedApplications(
-        @PathVariable Long jobId) {
+    public ResponseEntity<List<RecruiterApplicationResponse>> getRankedApplications(
+            @PathVariable Long jobId) {
 
-    return ResponseEntity.ok(
-            applicationService.getRankedApplications(jobId)
-    );
-}
+        return ResponseEntity.ok(
+                applicationService.getRankedApplications(jobId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StudentApplicationResponse> getApplication(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                applicationService.getApplication(id));
+    }
 }
