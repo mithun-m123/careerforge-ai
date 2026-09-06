@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.careerforge.backend.dto.ATSRequest;
 import com.careerforge.backend.dto.ATSResponse;
 import com.careerforge.backend.dto.ApplicationRequest;
+import com.careerforge.backend.dto.ApplicationStatusRequest;
 import com.careerforge.backend.dto.RecruiterApplicationResponse;
 import com.careerforge.backend.dto.StudentApplicationResponse;
 import com.careerforge.backend.entity.ATSResult;
@@ -42,9 +43,34 @@ public class ApplicationService {
 
     /*
      * Recruiter:
+     * Update the status of an application.
+     */
+    public RecruiterApplicationResponse updateStatus(
+            Long applicationId,
+            ApplicationStatusRequest request) {
+
+        Application application =
+                applicationRepository.findById(applicationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Application not found: "
+                                                + applicationId
+                                ));
+
+        application.setStatus(request.getStatus());
+
+        Application savedApplication =
+                applicationRepository.save(application);
+
+        return toRecruiterResponse(savedApplication);
+    }
+
+    /*
+     * Recruiter:
      * Returns all candidates for a job ordered by ATS score.
      */
-    public List<RecruiterApplicationResponse> getRankedApplications(Long jobId) {
+    public List<RecruiterApplicationResponse> getRankedApplications(
+            Long jobId) {
 
         List<Application> applications =
                 applicationRepository
@@ -60,29 +86,33 @@ public class ApplicationService {
      * Apply for a job and receive only student-facing information.
      */
     @Transactional
-    public StudentApplicationResponse apply(ApplicationRequest request) {
+    public StudentApplicationResponse apply(
+            ApplicationRequest request) {
 
         StudentProfile profile =
-                profileRepository.findById(request.getProfileId())
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Profile not found: "
-                                                + request.getProfileId()
-                                ));
+                profileRepository.findById(
+                        request.getProfileId()
+                ).orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Profile not found: "
+                                        + request.getProfileId()
+                        ));
 
         Job job =
-                jobRepository.findById(request.getJobId())
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Job not found: "
-                                                + request.getJobId()
-                                ));
+                jobRepository.findById(
+                        request.getJobId()
+                ).orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Job not found: "
+                                        + request.getJobId()
+                        ));
 
         // Prevent duplicate applications
         if (applicationRepository
                 .findByProfileIdAndJobId(
                         request.getProfileId(),
-                        request.getJobId())
+                        request.getJobId()
+                )
                 .isPresent()) {
 
             throw new IllegalArgumentException(
@@ -93,77 +123,107 @@ public class ApplicationService {
         // Prepare ATS request
         ATSRequest atsRequest = new ATSRequest();
 
-        atsRequest.setProfileId(request.getProfileId());
-        atsRequest.setJobId(request.getJobId());
+        atsRequest.setProfileId(
+                request.getProfileId()
+        );
+
+        atsRequest.setJobId(
+                request.getJobId()
+        );
 
         // Run ATS analysis
         ATSResponse atsResponse =
                 atsService.analyze(atsRequest);
 
         // Create application
-        Application application = new Application();
+        Application application =
+                new Application();
 
         application.setProfile(profile);
         application.setJob(job);
-        application.setStatus(ApplicationStatus.APPLIED);
-        application.setAppliedAt(LocalDateTime.now());
+        application.setStatus(
+                ApplicationStatus.APPLIED
+        );
+        application.setAppliedAt(
+                LocalDateTime.now()
+        );
 
         // Create ATS result
-        ATSResult atsResult = new ATSResult();
+        ATSResult atsResult =
+                new ATSResult();
 
-        atsResult.setApplication(application);
+        atsResult.setApplication(
+                application
+        );
 
         atsResult.setScore(
-                atsResponse.getScore());
+                atsResponse.getScore()
+        );
 
         atsResult.setEligible(
-                atsResponse.isEligible());
+                atsResponse.isEligible()
+        );
 
         atsResult.setMatchedRequiredSkills(
-                atsResponse.getMatchedRequiredSkills());
+                atsResponse.getMatchedRequiredSkills()
+        );
 
         atsResult.setMissingRequiredSkills(
-                atsResponse.getMissingRequiredSkills());
+                atsResponse.getMissingRequiredSkills()
+        );
 
         atsResult.setMatchedPreferredSkills(
-                atsResponse.getMatchedPreferredSkills());
+                atsResponse.getMatchedPreferredSkills()
+        );
 
         atsResult.setMissingPreferredSkills(
-                atsResponse.getMissingPreferredSkills());
+                atsResponse.getMissingPreferredSkills()
+        );
 
-        // Store both internally.
-        // Student API exposes only studentSuggestions.
-        // Recruiter API exposes only recruiterExplanation.
+        // Store student-facing AI suggestions
         atsResult.setStudentSuggestions(
-                atsResponse.getStudentSuggestions());
+                atsResponse.getStudentSuggestions()
+        );
 
+        // Store recruiter-facing AI explanation
         atsResult.setRecruiterExplanation(
-                atsResponse.getRecruiterExplanation());
+                atsResponse.getRecruiterExplanation()
+        );
 
-        application.setAtsResult(atsResult);
+        application.setAtsResult(
+                atsResult
+        );
 
         // Save complete application + ATS result
         Application savedApplication =
-                applicationRepository.save(application);
+                applicationRepository.save(
+                        application
+                );
 
         // Student receives student-facing response only
-        return toStudentResponse(savedApplication);
+        return toStudentResponse(
+                savedApplication
+        );
     }
 
     /*
      * Student:
      * View their application details.
      */
-    public StudentApplicationResponse getApplication(Long id) {
+    public StudentApplicationResponse getApplication(
+            Long id) {
 
         Application application =
                 applicationRepository.findById(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
-                                        "Application not found: " + id
+                                        "Application not found: "
+                                                + id
                                 ));
 
-        return toStudentResponse(application);
+        return toStudentResponse(
+                application
+        );
     }
 
     /*
@@ -181,40 +241,53 @@ public class ApplicationService {
         StudentApplicationResponse response =
                 new StudentApplicationResponse();
 
-        response.setId(application.getId());
+        response.setId(
+                application.getId()
+        );
 
         response.setProfileId(
-                application.getProfile().getId());
+                application.getProfile().getId()
+        );
 
         response.setJobId(
-                application.getJob().getId());
+                application.getJob().getId()
+        );
 
         response.setStatus(
-                application.getStatus().name());
+                application.getStatus().name()
+        );
 
         response.setAppliedAt(
-                application.getAppliedAt());
+                application.getAppliedAt()
+        );
 
         response.setAtsScore(
-                atsResult.getScore());
+                atsResult.getScore()
+        );
 
         response.setEligible(
-                atsResult.getEligible());
+                atsResult.getEligible()
+        );
 
         response.setMatchedRequiredSkills(
-                atsResult.getMatchedRequiredSkills());
+                atsResult.getMatchedRequiredSkills()
+        );
 
         response.setMissingRequiredSkills(
-                atsResult.getMissingRequiredSkills());
+                atsResult.getMissingRequiredSkills()
+        );
 
         response.setMatchedPreferredSkills(
-                atsResult.getMatchedPreferredSkills());
+                atsResult.getMatchedPreferredSkills()
+        );
 
         response.setMissingPreferredSkills(
-                atsResult.getMissingPreferredSkills());
+                atsResult.getMissingPreferredSkills()
+        );
 
         response.setStudentSuggestions(
-                atsResult.getStudentSuggestions());
+                atsResult.getStudentSuggestions()
+        );
 
         return response;
     }
@@ -234,40 +307,53 @@ public class ApplicationService {
         RecruiterApplicationResponse response =
                 new RecruiterApplicationResponse();
 
-        response.setId(application.getId());
+        response.setId(
+                application.getId()
+        );
 
         response.setProfileId(
-                application.getProfile().getId());
+                application.getProfile().getId()
+        );
 
         response.setJobId(
-                application.getJob().getId());
+                application.getJob().getId()
+        );
 
         response.setStatus(
-                application.getStatus().name());
+                application.getStatus().name()
+        );
 
         response.setAppliedAt(
-                application.getAppliedAt());
+                application.getAppliedAt()
+        );
 
         response.setAtsScore(
-                atsResult.getScore());
+                atsResult.getScore()
+        );
 
         response.setEligible(
-                atsResult.getEligible());
+                atsResult.getEligible()
+        );
 
         response.setMatchedRequiredSkills(
-                atsResult.getMatchedRequiredSkills());
+                atsResult.getMatchedRequiredSkills()
+        );
 
         response.setMissingRequiredSkills(
-                atsResult.getMissingRequiredSkills());
+                atsResult.getMissingRequiredSkills()
+        );
 
         response.setMatchedPreferredSkills(
-                atsResult.getMatchedPreferredSkills());
+                atsResult.getMatchedPreferredSkills()
+        );
 
         response.setMissingPreferredSkills(
-                atsResult.getMissingPreferredSkills());
+                atsResult.getMissingPreferredSkills()
+        );
 
         response.setRecruiterExplanation(
-                atsResult.getRecruiterExplanation());
+                atsResult.getRecruiterExplanation()
+        );
 
         return response;
     }

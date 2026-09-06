@@ -1,0 +1,14 @@
+// Test 1 — CareerForge application context loads successfully
+
+package com.careerforge.backend;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ApplicationIntegrationTest {
+
+    @Test
+    void contextLoads() {
+    }
+}

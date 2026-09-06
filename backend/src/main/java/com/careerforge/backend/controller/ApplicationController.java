@@ -15,6 +15,8 @@ import com.careerforge.backend.dto.ApplicationRequest;
 import com.careerforge.backend.dto.StudentApplicationResponse;
 import com.careerforge.backend.dto.RecruiterApplicationResponse;
 import com.careerforge.backend.service.ApplicationService;
+import org.springframework.web.bind.annotation.PatchMapping;
+import com.careerforge.backend.dto.ApplicationStatusRequest;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -54,4 +56,16 @@ public class ApplicationController {
         return ResponseEntity.ok(
                 applicationService.getApplication(id));
     }
+@PatchMapping("/{applicationId}/status")
+public ResponseEntity<RecruiterApplicationResponse> updateStatus(
+        @PathVariable Long applicationId,
+        @RequestBody ApplicationStatusRequest request) {
+
+    RecruiterApplicationResponse response =
+            applicationService.updateStatus(
+                    applicationId,
+                    request);
+
+    return ResponseEntity.ok(response);
+}
 }
